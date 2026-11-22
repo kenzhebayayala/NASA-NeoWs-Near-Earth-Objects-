@@ -1,0 +1,8 @@
+requests
+python-dotenv
+kafka-python>=2.0.3
+pandas
+numpy
+pandera
+matplotlib
+seaborn
