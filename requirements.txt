@@ -1,6 +1,6 @@
 requests
 python-dotenv
-kafka-python>=2.0.3
+kafka-python-ng
 pandas
 numpy
 pandera
