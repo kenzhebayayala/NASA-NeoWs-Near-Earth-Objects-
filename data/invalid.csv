@@ -1,0 +1,4 @@
+record_id,neo_id,name,nasa_jpl_url,absolute_magnitude_h,diameter_min_km,diameter_max_km,is_hazardous,is_sentry,close_approach_date,velocity_kmh,miss_distance_km,orbiting_body,is_injected
+BAD_NEGATIVE_DIAMETER,3263448,(2004 XK14),https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3263448,22.44,0.0864082036,-5.0,False,False,2026-11-19,31401.4613902227,13132346.902443938,Earth,True
+BAD_DATE,3263448,(2004 XK14),https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3263448,22.44,0.0864082036,0.1932146172,False,False,32-13-2026,31401.4613902227,13132346.902443938,Earth,True
+3263448_2026-11-19,3263448,(2004 XK14),https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3263448,22.44,0.0864082036,0.1932146172,False,False,2026-11-19,31401.4613902227,13132346.902443938,Earth,True

@@ -1,0 +1,6 @@
+,count,count,mean,mean
+is_hazardous,False,True,False,True
+size_class,,,,
+large,9,4,73510.05684992785,52911.93517588288
+medium,60,22,54826.56497707388,58539.68134125913
+small,108,0,45969.51399037088,0.0
