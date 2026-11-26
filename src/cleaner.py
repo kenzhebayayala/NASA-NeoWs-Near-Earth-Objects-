@@ -1,9 +1,11 @@
 """Step 4 (Person 2): cleaning with pandas / NumPy.
 
-Reads data/valid.csv (already validated), writes data/clean.csv.
+Interface used by main.py:  clean_df = clean(valid_df)
+Also runs the filter, GroupBy and pivot_table and saves data/clean.csv,
+data/agg_by_date.csv, data/pivot_size_hazard.csv.
 Every operation has a reason (see docs/cleaning_log.md).
 
-Run:  python src/cleaner.py
+Run alone:  python src/cleaner.py
 """
 from pathlib import Path
 
@@ -20,11 +22,12 @@ NUM_COLS = ["absolute_magnitude_h", "diameter_min_km", "diameter_max_km",
             "velocity_kmh", "miss_distance_km"]
 
 
-def clean(df):
+def _clean(df):
+    df = df.copy()
     print(f"Input (valid): {len(df)}")
 
     # 0. Numeric types first.
-    # Reason: the CSV is read as text; median and NumPy need real numbers.
+    # Reason: the data comes as text; median and NumPy need real numbers.
     for col in NUM_COLS:
         df[col] = pd.to_numeric(df[col], errors="raise").astype(float)
 
@@ -69,8 +72,9 @@ def clean(df):
     return df.reset_index(drop=True)
 
 
-if __name__ == "__main__":
-    df = clean(pd.read_csv(IN_CSV, dtype=str))
+def clean(df):
+    """Interface for main.py: valid_df -> clean_df (also saves the CSV outputs)."""
+    df = _clean(df)
 
     # 6. Multi-condition filter (analysis only, does NOT remove rows from clean.csv).
     big_fast = df[(df["diameter_avg_km"] > 0.3)
@@ -95,8 +99,13 @@ if __name__ == "__main__":
                            fill_value=0)
     print(pivot.to_string())
 
+    OUT_CSV.parent.mkdir(exist_ok=True)
     df.to_csv(OUT_CSV, index=False)
     by_date.to_csv(BY_DATE_CSV, index=False)
     pivot.to_csv(PIVOT_CSV)
     print(f"Clean: {len(df)} rows, {df.shape[1]} columns -> {OUT_CSV}")
-    print("Columns:", list(df.columns))
+    return df
+
+
+if __name__ == "__main__":
+    clean(pd.read_csv(IN_CSV, dtype=str))

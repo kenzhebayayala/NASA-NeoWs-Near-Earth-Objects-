@@ -1,9 +1,10 @@
 """Step 3 (Person 2): Pandera validation BEFORE cleaning.
 
-Reads data/consumed.csv, adds 3 deliberately bad records, validates,
-splits into data/valid.csv and data/invalid.csv.
+Interface used by main.py:  valid_df, invalid_df = validate(df)
+Adds 3 deliberately bad records (is_injected=True), validates, saves
+data/valid.csv and data/invalid.csv.
 
-Run:  python src/validator.py
+Run alone:  python src/validator.py
 """
 from pathlib import Path
 
@@ -61,7 +62,8 @@ schema = DataFrameSchema({
 })
 
 
-def validate(df):
+def find_invalid(df):
+    """Returns (sorted row indexes that failed, Pandera failure table)."""
     try:
         schema.validate(df.drop(columns="is_injected"), lazy=True)
         failures = pd.DataFrame(columns=["index", "column", "check"])
@@ -71,20 +73,29 @@ def validate(df):
     return bad_idx, failures
 
 
-if __name__ == "__main__":
-    raw = pd.read_csv(IN_CSV, dtype=str)
-    print(f"Consumed: {len(raw)}")
-    df = add_bad_records(to_types(raw))
+def validate(df):
+    """Interface for main.py: df (received from Kafka) -> (valid_df, invalid_df)."""
+    print(f"Consumed: {len(df)}")
+    df = add_bad_records(to_types(df))
     print(f"After adding 3 test errors: {len(df)}")
 
-    bad_idx, failures = validate(df)
+    bad_idx, failures = find_invalid(df)
     invalid = df.loc[bad_idx]
     valid = df.drop(index=bad_idx)
 
     print(f"Valid: {len(valid)}, Invalid: {len(invalid)}")
     print(f"  injected caught: {int(invalid.is_injected.sum())} of 3")
     print(f"  natural errors:  {int((~invalid.is_injected).sum())}")
-    print(failures[["index", "column", "check"]].to_string())
+    if len(failures):
+        print(failures[["index", "column", "check"]].to_string())
 
+    valid = valid.drop(columns="is_injected").reset_index(drop=True)
+    invalid = invalid.reset_index(drop=True)
+    VALID_CSV.parent.mkdir(exist_ok=True)
     invalid.to_csv(INVALID_CSV, index=False)
-    valid.drop(columns="is_injected").to_csv(VALID_CSV, index=False)
+    valid.to_csv(VALID_CSV, index=False)
+    return valid, invalid
+
+
+if __name__ == "__main__":
+    validate(pd.read_csv(IN_CSV, dtype=str))
