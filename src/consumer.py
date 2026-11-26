@@ -1,9 +1,9 @@
 """Step 2 (Person 2): read all messages from Kafka topic neo.raw.
 
-Deserializes JSON, stops when EXPECTED messages are read or on timeout,
-prints how many were consumed, saves them to data/consumed.csv.
+Interface used by main.py:  df = consume(expected=N)
+Stops when `expected` messages are read or on timeout, saves data/consumed.csv.
 
-Run:  python src/consumer.py
+Run alone:  python src/consumer.py
 """
 import json
 import os
@@ -24,8 +24,8 @@ TIMEOUT_MS = 10000          # 10 sec without new messages -> stop
 OUT_CSV = ROOT / "data" / "consumed.csv"
 
 
-def consume_all():
-    """Read messages until EXPECTED reached or timeout. Returns list of dicts."""
+def consume_all(expected=EXPECTED):
+    """Read messages until `expected` reached or timeout. Returns list of dicts."""
     try:
         consumer = KafkaConsumer(
             TOPIC,
@@ -47,19 +47,25 @@ def consume_all():
             except (UnicodeDecodeError, json.JSONDecodeError) as error:
                 bad_json += 1
                 print(f"  bad message at offset {msg.offset}: {error}")
-            if len(records) + bad_json >= EXPECTED:
+            if len(records) + bad_json >= expected:
                 break
     except KafkaError as error:
         print("Kafka error while reading:", error)
     finally:
         consumer.close()
 
-    print(f"Consumed: {len(records)} (bad JSON: {bad_json}, expected: {EXPECTED})")
+    print(f"Consumed: {len(records)} (bad JSON: {bad_json}, expected: {expected})")
     return records
 
 
-if __name__ == "__main__":
-    data = consume_all()
+def consume(expected=EXPECTED):
+    """Interface for main.py: returns all received messages as a DataFrame."""
+    df = pd.DataFrame(consume_all(expected))
     OUT_CSV.parent.mkdir(exist_ok=True)
-    pd.DataFrame(data).to_csv(OUT_CSV, index=False)
+    df.to_csv(OUT_CSV, index=False)
     print(f"Saved to {OUT_CSV}")
+    return df
+
+
+if __name__ == "__main__":
+    consume()
